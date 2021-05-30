@@ -58,14 +58,9 @@ pub fn setup_debug_callback(instance: &Arc<Instance>) -> Option<DebugCallback> {
         return None;
     }
     let mut serverity = MessageSeverity::errors_and_warnings();
-    serverity.verbose = true;
-    DebugCallback::new(
-        instance,
-        serverity,
-        MessageType::all(),
-        |msg| {
-            println!("validation layer: {:?}", msg.description);
-        },
-    )
+    serverity.verbose = false;
+    DebugCallback::new(instance, serverity, MessageType::all(), |msg| {
+        println!("validation layer: {:?}", msg.description);
+    })
     .ok()
 }
