@@ -43,7 +43,6 @@ struct Hex {
     pipeline: Arc<crate::pipeline::ConcreteGraphicsPipeline>,
     #[allow(dead_code)]
     framebuffers: Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
-    cmd_buffer: Vec<Arc<vulkano::command_buffer::PrimaryAutoCommandBuffer>>,
     resizehelper: dynamicstate::ResizeHelper,
 }
 
@@ -61,14 +60,6 @@ impl Hex {
         let pipeline = crate::pipeline::get_pipeline(&device, &renderpass);
         let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
         let resizehelper = crate::dynamicstate::ResizeHelper::new(&swapchain);
-        let cmd_buffer = crate::commandbuffers::get_command_buffers(
-            &pipeline,
-            &graphical_queue,
-            &device,
-            &framebuffers,
-            &vertex_buffer,
-            &resizehelper,
-        );
         Self {
             event_loop,
             device,
@@ -83,7 +74,6 @@ impl Hex {
             pipeline,
             framebuffers,
             resizehelper,
-            cmd_buffer,
         }
     }
 
@@ -102,7 +92,6 @@ impl Hex {
             mut framebuffers,
             mut images,
             mut resizehelper,
-            mut cmd_buffer,
             ..
         } = self;
         let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
@@ -123,15 +112,10 @@ impl Hex {
                 previous_frame_end.as_mut().unwrap().cleanup_finished();
                 if recreate_swapchain {
                     recreate_swapchain = resizehelper.resize(
-                        &pipeline,
                         &surface,
-                        &device,
-                        &vertex_buffer,
-                        &graphical_queue,
                         &renderpass,
                         &mut swapchain,
                         &mut framebuffers,
-                        &mut cmd_buffer,
                         &mut images,
                     );
                 }
@@ -147,7 +131,16 @@ impl Hex {
                 if suboptimal {
                     recreate_swapchain = true;
                 }
-                let cmd_buffer = cmd_buffer[image_num].clone();
+
+                let frame = framebuffers[image_num].clone();
+                let cmd_buffer = crate::commandbuffers::get_command_buffers(
+                    &pipeline,
+                    &graphical_queue,
+                    &device,
+                    &frame,
+                    &vertex_buffer,
+                    &resizehelper,
+                );
                 let future = previous_frame_end
                     .take()
                     .unwrap()

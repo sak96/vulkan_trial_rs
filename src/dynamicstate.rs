@@ -1,17 +1,13 @@
 use std::sync::Arc;
 
 use vulkano::{
-    buffer::CpuAccessibleBuffer,
-    command_buffer::{DynamicState, PrimaryAutoCommandBuffer},
-    device::{Device, Queue},
+    command_buffer::{DynamicState},
     image::SwapchainImage,
     pipeline::viewport::Viewport,
     render_pass::{FramebufferAbstract, RenderPass},
     swapchain::{Surface, Swapchain, SwapchainCreationError},
 };
 use winit::window::Window;
-
-use crate::{pipeline::ConcreteGraphicsPipeline, vertex::Vertex};
 
 pub struct ResizeHelper(DynamicState);
 
@@ -24,15 +20,10 @@ impl ResizeHelper {
 
     pub fn resize(
         &mut self,
-        pipeline: &Arc<ConcreteGraphicsPipeline>,
         surface: &Arc<Surface<Window>>,
-        device: &Arc<Device>,
-        vertex_buffer: &Arc<CpuAccessibleBuffer<[Vertex]>>,
-        graphical_queue: &Arc<Queue>,
         renderpass: &Arc<RenderPass>,
         swapchain: &mut Arc<Swapchain<Window>>,
         framebuffers: &mut Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
-        cmd_buffer: &mut Vec<Arc<PrimaryAutoCommandBuffer>>,
         images: &mut Vec<Arc<SwapchainImage<Window>>>,
     ) -> bool {
         let dim: [u32; 2] = surface.window().inner_size().into();
@@ -45,14 +36,6 @@ impl ResizeHelper {
         *images = new_images;
         *framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
         self.resize_using_dynamic_state(&swapchain);
-        *cmd_buffer = crate::commandbuffers::get_command_buffers(
-            &pipeline,
-            &graphical_queue,
-            &device,
-            &framebuffers,
-            &vertex_buffer,
-            self,
-        );
         true
     }
 
