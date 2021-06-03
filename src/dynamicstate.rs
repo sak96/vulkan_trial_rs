@@ -16,8 +16,10 @@ use crate::{pipeline::ConcreteGraphicsPipeline, vertex::Vertex};
 pub struct ResizeHelper(DynamicState);
 
 impl ResizeHelper {
-    pub fn new() -> Self {
-        Self(DynamicState::none())
+    pub fn new(swapchain: &Arc<Swapchain<Window>>) -> Self {
+        let mut resizer = Self(DynamicState::none());
+        resizer.resize_using_dynamic_state(&swapchain);
+        resizer
     }
 
     pub fn resize(
@@ -30,7 +32,7 @@ impl ResizeHelper {
         renderpass: &Arc<RenderPass>,
         swapchain: &mut Arc<Swapchain<Window>>,
         framebuffers: &mut Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
-        cmd_buffer: &mut Option<Vec<Arc<PrimaryAutoCommandBuffer>>>,
+        cmd_buffer: &mut Vec<Arc<PrimaryAutoCommandBuffer>>,
         images: &mut Vec<Arc<SwapchainImage<Window>>>,
     ) -> bool {
         let dim: [u32; 2] = surface.window().inner_size().into();
@@ -43,14 +45,14 @@ impl ResizeHelper {
         *images = new_images;
         *framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
         self.resize_using_dynamic_state(&swapchain);
-        *cmd_buffer = Some(crate::commandbuffers::get_command_buffers(
+        *cmd_buffer = crate::commandbuffers::get_command_buffers(
             &pipeline,
             &graphical_queue,
             &device,
             &framebuffers,
             &vertex_buffer,
             self,
-        ));
+        );
         true
     }
 

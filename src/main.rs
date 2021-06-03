@@ -43,7 +43,8 @@ struct Hex {
     pipeline: Arc<crate::pipeline::ConcreteGraphicsPipeline>,
     #[allow(dead_code)]
     framebuffers: Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
-    // cmd_buffer: Vec<Arc<vulkano::command_buffer::PrimaryAutoCommandBuffer>>,
+    cmd_buffer: Vec<Arc<vulkano::command_buffer::PrimaryAutoCommandBuffer>>,
+    resizehelper: dynamicstate::ResizeHelper,
 }
 
 impl Hex {
@@ -59,13 +60,15 @@ impl Hex {
         let renderpass = crate::renderpass::get_render_pass(&device, &swapchain);
         let pipeline = crate::pipeline::get_pipeline(&device, &renderpass);
         let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
-        // let cmd_buffer = crate::commandbuffers::get_command_buffers(
-        //     &pipeline,
-        //     &graphical_queue,
-        //     &device,
-        //     &framebuffers,
-        //     &vertex_buffer,
-        // );
+        let resizehelper = crate::dynamicstate::ResizeHelper::new(&swapchain);
+        let cmd_buffer = crate::commandbuffers::get_command_buffers(
+            &pipeline,
+            &graphical_queue,
+            &device,
+            &framebuffers,
+            &vertex_buffer,
+            &resizehelper,
+        );
         Self {
             event_loop,
             device,
@@ -79,13 +82,13 @@ impl Hex {
             vertex_buffer,
             pipeline,
             framebuffers,
-            // cmd_buffer,
+            resizehelper,
+            cmd_buffer,
         }
     }
 
     pub fn run(self) {
         let mut recreate_swapchain = true;
-        let mut resizehelper = crate::dynamicstate::ResizeHelper::new();
         let Self {
             device,
             event_loop,
@@ -98,10 +101,11 @@ impl Hex {
             mut swapchain,
             mut framebuffers,
             mut images,
+            mut resizehelper,
+            mut cmd_buffer,
             ..
         } = self;
         let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
-        let mut cmd_buffer = None;
         event_loop.run(move |event, _, control_flow| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -143,7 +147,7 @@ impl Hex {
                 if suboptimal {
                     recreate_swapchain = true;
                 }
-                let cmd_buffer = cmd_buffer.as_ref().unwrap()[image_num].clone();
+                let cmd_buffer = cmd_buffer[image_num].clone();
                 let future = previous_frame_end
                     .take()
                     .unwrap()
