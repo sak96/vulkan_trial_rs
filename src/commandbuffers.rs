@@ -2,14 +2,12 @@ use std::sync::Arc;
 
 use vulkano::{
     buffer::CpuAccessibleBuffer,
-    command_buffer::{
-        AutoCommandBufferBuilder, DynamicState, PrimaryAutoCommandBuffer, SubpassContents,
-    },
+    command_buffer::{AutoCommandBufferBuilder, PrimaryAutoCommandBuffer, SubpassContents},
     device::{Device, Queue},
     render_pass::FramebufferAbstract,
 };
 
-use crate::{pipeline::ConcreteGraphicsPipeline, vertex::Vertex};
+use crate::{dynamicstate::ResizeHelper, pipeline::ConcreteGraphicsPipeline, vertex::Vertex};
 
 pub fn get_command_buffers(
     pipeline: &Arc<ConcreteGraphicsPipeline>,
@@ -17,6 +15,7 @@ pub fn get_command_buffers(
     device: &Arc<Device>,
     framebuffers: &Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
     vertex_buffer: &Arc<CpuAccessibleBuffer<[Vertex]>>,
+    resizehelper: &ResizeHelper,
 ) -> Vec<Arc<PrimaryAutoCommandBuffer>> {
     let clear_values = vec![[0.0, 0.0, 0.0, 1.0].into()];
     framebuffers
@@ -37,7 +36,7 @@ pub fn get_command_buffers(
                 .unwrap()
                 .draw(
                     pipeline.clone(),
-                    &DynamicState::none(),
+                    &resizehelper.inner(),
                     vertex_buffer.clone(),
                     (),
                     (),

@@ -14,6 +14,7 @@ use winit::window::Window;
 
 mod commandbuffers;
 mod device;
+mod dynamicstate;
 mod framebuffers;
 mod instance;
 mod pipeline;
@@ -42,7 +43,7 @@ struct Hex {
     pipeline: Arc<crate::pipeline::ConcreteGraphicsPipeline>,
     #[allow(dead_code)]
     framebuffers: Vec<Arc<dyn FramebufferAbstract + Send + Sync>>,
-    cmd_buffer: Vec<Arc<vulkano::command_buffer::PrimaryAutoCommandBuffer>>,
+    // cmd_buffer: Vec<Arc<vulkano::command_buffer::PrimaryAutoCommandBuffer>>,
 }
 
 impl Hex {
@@ -56,15 +57,15 @@ impl Hex {
             crate::swapchains::get_swapchain(&surface, &device, &graphical_queue, &present_queue);
         let vertex_buffer = crate::vertex::Vertex::get_buffer(&device);
         let renderpass = crate::renderpass::get_render_pass(&device, &swapchain);
-        let pipeline = crate::pipeline::get_pipeline(&device, &renderpass, &swapchain);
+        let pipeline = crate::pipeline::get_pipeline(&device, &renderpass);
         let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
-        let cmd_buffer = crate::commandbuffers::get_command_buffers(
-            &pipeline,
-            &graphical_queue,
-            &device,
-            &framebuffers,
-            &vertex_buffer,
-        );
+        // let cmd_buffer = crate::commandbuffers::get_command_buffers(
+        //     &pipeline,
+        //     &graphical_queue,
+        //     &device,
+        //     &framebuffers,
+        //     &vertex_buffer,
+        // );
         Self {
             event_loop,
             device,
@@ -78,22 +79,29 @@ impl Hex {
             vertex_buffer,
             pipeline,
             framebuffers,
-            cmd_buffer,
+            // cmd_buffer,
         }
     }
 
     pub fn run(self) {
-        let mut _recreate_swapchain = false;
-        let mut previous_frame_end = Some(sync::now(self.device.clone()).boxed());
+        let mut recreate_swapchain = true;
+        let mut resizehelper = crate::dynamicstate::ResizeHelper::new();
         let Self {
             device,
             event_loop,
             graphical_queue,
-            swapchain,
             present_queue,
-            cmd_buffer,
+            vertex_buffer,
+            pipeline,
+            surface,
+            renderpass,
+            mut swapchain,
+            mut framebuffers,
+            mut images,
             ..
         } = self;
+        let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
+        let mut cmd_buffer = None;
         event_loop.run(move |event, _, control_flow| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -105,35 +113,37 @@ impl Hex {
                 event: WindowEvent::Resized(_),
                 ..
             } => {
-                _recreate_swapchain = true;
+                recreate_swapchain = true;
             }
             Event::RedrawEventsCleared => {
                 previous_frame_end.as_mut().unwrap().cleanup_finished();
-                // if recreate_swapchain {
-                //     let dim: [u32; 2] = surface.window().inner_size().into();
-                //     let (new_swapchain, new_images) =
-                //         match swapchain.recreate().dimensions(dim).build() {
-                //             Ok(r) => r,
-                //             Err(SwapchainCreationError::UnsupportedDimensions) => return,
-                //             Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
-                //         };
-                //     swapchain = new_swapchain;
-                //     framebuffers = crate::framebuffers::get_frame_buffer(&new_images, &renderpass);
-                //     recreate_swapchain = false;
-                // }
+                if recreate_swapchain {
+                    recreate_swapchain = resizehelper.resize(
+                        &pipeline,
+                        &surface,
+                        &device,
+                        &vertex_buffer,
+                        &graphical_queue,
+                        &renderpass,
+                        &mut swapchain,
+                        &mut framebuffers,
+                        &mut cmd_buffer,
+                        &mut images,
+                    );
+                }
                 let (image_num, suboptimal, acquire_future) =
                     match swapchain::acquire_next_image(swapchain.clone(), None) {
                         Ok(r) => r,
                         Err(AcquireError::OutOfDate) => {
-                            _recreate_swapchain = true;
+                            recreate_swapchain = true;
                             return;
                         }
                         Err(e) => panic!("failed due to {:?}", e),
                     };
                 if suboptimal {
-                    _recreate_swapchain = true;
+                    recreate_swapchain = true;
                 }
-                let cmd_buffer = cmd_buffer[image_num].clone();
+                let cmd_buffer = cmd_buffer.as_ref().unwrap()[image_num].clone();
                 let future = previous_frame_end
                     .take()
                     .unwrap()
@@ -148,7 +158,7 @@ impl Hex {
                         previous_frame_end = Some(future.boxed());
                     }
                     Err(FlushError::OutOfDate) => {
-                        _recreate_swapchain = true;
+                        recreate_swapchain = true;
                         previous_frame_end = Some(sync::now(device.clone()).boxed());
                     }
                     Err(e) => {
