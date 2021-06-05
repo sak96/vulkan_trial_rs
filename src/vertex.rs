@@ -8,10 +8,9 @@ use vulkano::{
 #[derive(Default, Clone)]
 pub struct Vertex {
     position: [f32; 2],
-    color: [f32; 4],
 }
 
-vulkano::impl_vertex!(Vertex, position, color);
+vulkano::impl_vertex!(Vertex, position);
 impl Vertex {
     fn sierpinski(
         vertices: &mut Vec<Vertex>,
@@ -22,10 +21,7 @@ impl Vertex {
     ) {
         if depth == 0 {
             for position in std::array::IntoIter::new([top, left, right]) {
-                vertices.push(Vertex {
-                    position,
-                    color: [1.0, 1.0, 0.0, 1.0],
-                })
+                vertices.push(Vertex { position })
             }
         } else {
             let top_left = [(top[0] + left[0]) / 2.0, (top[1] + left[1]) / 2.0];

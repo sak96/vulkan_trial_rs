@@ -133,6 +133,12 @@ impl Hex {
                 }
 
                 let frame = framebuffers[image_num].clone();
+                let push_constants: Vec<_> = (0..3)
+                    .map(|i| crate::shaders::vs::ty::PushConstantData {
+                        offset: [0.0, -0.4 + i as f32 * 0.25],
+                        color: [0.0, 0.0, 0.2 + 0.2 * i as f32, 0.1],
+                    })
+                    .collect();
                 let cmd_buffer = crate::commandbuffers::get_command_buffers(
                     &pipeline,
                     &graphical_queue,
@@ -140,6 +146,7 @@ impl Hex {
                     &frame,
                     &vertex_buffer,
                     &resizehelper,
+                    &push_constants,
                 );
                 let future = previous_frame_end
                     .take()
