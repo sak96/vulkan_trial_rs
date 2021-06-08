@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use vulkano::device::{Device, Queue};
 use vulkano::image::SwapchainImage;
 use vulkano::instance::debug::DebugCallback;
 use vulkano::render_pass::{FramebufferAbstract, RenderPass};
@@ -26,10 +25,8 @@ mod window;
 
 struct Hex {
     event_loop: EventLoop<()>,
-    device: Arc<Device>,
-    graphical_queue: Arc<Queue>,
+    logical_device: crate::device::LogicalDevice,
     _debug_callback: Option<DebugCallback>,
-    present_queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
     #[allow(dead_code)]
     surface: Arc<Surface<Window>>,
@@ -48,47 +45,47 @@ struct Hex {
 
 impl Hex {
     pub fn new() -> Self {
-        println!("{}",std::mem::size_of::<crate::shaders::vs::ty::PushConstantData>());
+        println!(
+            "{}",
+            std::mem::size_of::<crate::shaders::vs::ty::PushConstantData>()
+        );
         let instance = crate::instance::create_instance();
         let _debug_callback = crate::instance::setup_debug_callback(&instance);
         let (event_loop, surface) = crate::window::init_window(&instance);
-        let (device, graphical_queue, present_queue) =
-            crate::device::create_logical_device(&instance, &surface);
+        let logical_device = crate::device::LogicalDevice::create_logical_device(&instance, &surface);
         let (swapchain, images) =
-            crate::swapchains::get_swapchain(&surface, &device, &graphical_queue, &present_queue);
+            crate::swapchains::get_swapchain(&surface, &logical_device);
         let serpenskis = vec![
             crate::game::Serpenskis::new(
-                &device,
+                &logical_device.device,
                 [0.0, 1.0, 0.0, 1.0],
                 [0.0, 0.0],
                 [1.0, 1.0],
                 [0.0],
             ),
             crate::game::Serpenskis::new(
-                &device,
+                &logical_device.device,
                 [0.0, 1.0, 1.0, 1.0],
                 [0.0, 1.0],
                 [0.5, 1.0],
                 [std::f32::consts::PI],
             ),
             crate::game::Serpenskis::new(
-                &device,
+                &logical_device.device,
                 [1.0, 1.0, 0.0, 1.0],
                 [0.0, 1.0],
                 [0.5, 0.5],
                 [2.0 * std::f32::consts::PI],
             ),
         ];
-        let renderpass = crate::renderpass::get_render_pass(&device, &swapchain);
-        let pipeline = crate::pipeline::get_pipeline(&device, &renderpass);
+        let renderpass = crate::renderpass::get_render_pass(&logical_device.device, &swapchain);
+        let pipeline = crate::pipeline::get_pipeline(&logical_device.device, &renderpass);
         let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
         let resizehelper = crate::dynamicstate::ResizeHelper::new(&swapchain);
         Self {
             event_loop,
-            device,
+            logical_device,
             surface,
-            graphical_queue,
-            present_queue,
             swapchain,
             images,
             _debug_callback,
@@ -104,10 +101,8 @@ impl Hex {
         let mut offset = 0.0;
         let mut recreate_swapchain = true;
         let Self {
-            device,
+            logical_device,
             event_loop,
-            graphical_queue,
-            present_queue,
             serpenskis,
             pipeline,
             surface,
@@ -118,7 +113,7 @@ impl Hex {
             mut resizehelper,
             ..
         } = self;
-        let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
+        let mut previous_frame_end = Some(sync::now(logical_device.device.clone()).boxed());
         event_loop.run(move |event, _, control_flow| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -160,8 +155,8 @@ impl Hex {
 
                 let cmd_buffer = crate::commandbuffers::get_command_buffers(
                     &pipeline,
-                    &graphical_queue,
-                    &device,
+                    &logical_device.graphical_queue,
+                    &logical_device.device,
                     &frame,
                     &resizehelper,
                     &serpenskis.as_slice(),
@@ -170,9 +165,9 @@ impl Hex {
                     .take()
                     .unwrap()
                     .join(acquire_future)
-                    .then_execute(graphical_queue.clone(), cmd_buffer)
+                    .then_execute(logical_device.graphical_queue.clone(), cmd_buffer)
                     .unwrap()
-                    .then_swapchain_present(present_queue.clone(), swapchain.clone(), image_num)
+                    .then_swapchain_present(logical_device.present_queue.clone(), swapchain.clone(), image_num)
                     .then_signal_fence_and_flush();
 
                 match future {
@@ -181,11 +176,11 @@ impl Hex {
                     }
                     Err(FlushError::OutOfDate) => {
                         recreate_swapchain = true;
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
+                        previous_frame_end = Some(sync::now(logical_device.device.clone()).boxed());
                     }
                     Err(e) => {
                         println!("Failed to flush future: {:?}", e);
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
+                        previous_frame_end = Some(sync::now(logical_device.device.clone()).boxed());
                     }
                 }
             }
