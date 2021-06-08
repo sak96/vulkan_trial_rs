@@ -1,6 +1,3 @@
-use vulkano::instance::debug::DebugCallback;
-use vulkano::instance::debug::MessageSeverity;
-use vulkano::instance::debug::MessageType;
 use vulkano::instance::Instance;
 use vulkano::instance::InstanceExtensions;
 use vulkano::{app_info_from_cargo_toml, instance::layers_list};
@@ -51,16 +48,4 @@ fn check_validation_layer_support() -> Vec<&'static str> {
         panic!("no validation extension found!");
     }
     validation_layers
-}
-
-pub fn setup_debug_callback(instance: &Arc<Instance>) -> Option<DebugCallback> {
-    if !ENABLE_VALIDATION_LAYERS {
-        return None;
-    }
-    let mut serverity = MessageSeverity::errors_and_warnings();
-    serverity.verbose = false;
-    DebugCallback::new(instance, serverity, MessageType::all(), |msg| {
-        println!("validation layer: {:?}", msg.description);
-    })
-    .ok()
 }

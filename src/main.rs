@@ -26,7 +26,6 @@ mod window;
 struct Hex {
     event_loop: EventLoop<()>,
     logical_device: crate::device::LogicalDevice,
-    _debug_callback: Option<DebugCallback>,
     swapchain: Arc<Swapchain<Window>>,
     #[allow(dead_code)]
     surface: Arc<Surface<Window>>,
@@ -50,11 +49,10 @@ impl Hex {
             std::mem::size_of::<crate::shaders::vs::ty::PushConstantData>()
         );
         let instance = crate::instance::create_instance();
-        let _debug_callback = crate::instance::setup_debug_callback(&instance);
         let (event_loop, surface) = crate::window::init_window(&instance);
-        let logical_device = crate::device::LogicalDevice::create_logical_device(&instance, &surface);
-        let (swapchain, images) =
-            crate::swapchains::get_swapchain(&surface, &logical_device);
+        let logical_device =
+            crate::device::LogicalDevice::create_logical_device(&instance, &surface);
+        let (swapchain, images) = crate::swapchains::get_swapchain(&surface, &logical_device);
         let serpenskis = vec![
             crate::game::Serpenskis::new(
                 &logical_device.device,
@@ -88,7 +86,6 @@ impl Hex {
             surface,
             swapchain,
             images,
-            _debug_callback,
             renderpass,
             serpenskis,
             pipeline,
@@ -167,7 +164,11 @@ impl Hex {
                     .join(acquire_future)
                     .then_execute(logical_device.graphical_queue.clone(), cmd_buffer)
                     .unwrap()
-                    .then_swapchain_present(logical_device.present_queue.clone(), swapchain.clone(), image_num)
+                    .then_swapchain_present(
+                        logical_device.present_queue.clone(),
+                        swapchain.clone(),
+                        image_num,
+                    )
                     .then_signal_fence_and_flush();
 
                 match future {

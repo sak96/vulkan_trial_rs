@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use vulkano::device::{Device, DeviceExtensions, Features, Queue};
+use vulkano::instance::debug::{DebugCallback, MessageSeverity, MessageType};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::Surface;
 
@@ -10,10 +11,12 @@ pub struct LogicalDevice {
     pub device: Arc<Device>,
     pub graphical_queue: Arc<Queue>,
     pub present_queue: Arc<Queue>,
+    _debug_callback: Option<DebugCallback>,
 }
 
 impl LogicalDevice {
     pub fn create_logical_device(instance: &Arc<Instance>, surface: &Arc<Surface<Window>>) -> Self {
+        let _debug_callback = Self::setup_debug_callback(&instance);
         let physical = Self::create_phy_device(&instance);
         let mut graphical_queue_family = None;
         let mut present_queue_family = None;
@@ -60,6 +63,7 @@ impl LogicalDevice {
             device,
             graphical_queue,
             present_queue,
+            _debug_callback,
         }
     }
 
@@ -69,5 +73,17 @@ impl LogicalDevice {
             .expect("no device available");
         println!("{}|{:?}|", physical.name(), physical.ty());
         physical
+    }
+
+    fn setup_debug_callback(instance: &Arc<Instance>) -> Option<DebugCallback> {
+        if !crate::instance::ENABLE_VALIDATION_LAYERS {
+            return None;
+        }
+        let mut serverity = MessageSeverity::errors_and_warnings();
+        serverity.verbose = false;
+        DebugCallback::new(instance, serverity, MessageType::all(), |msg| {
+            println!("validation layer: {:?}", msg.description);
+        })
+        .ok()
     }
 }
