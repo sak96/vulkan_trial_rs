@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use vulkano::buffer::CpuAccessibleBuffer;
 use vulkano::device::{Device, Queue};
 use vulkano::image::SwapchainImage;
 use vulkano::instance::debug::DebugCallback;
@@ -16,6 +15,7 @@ mod commandbuffers;
 mod device;
 mod dynamicstate;
 mod framebuffers;
+mod game;
 mod instance;
 mod pipeline;
 mod renderpass;
@@ -38,7 +38,7 @@ struct Hex {
     #[allow(dead_code)]
     renderpass: Arc<RenderPass>,
     #[allow(dead_code)]
-    vertex_buffer: Arc<CpuAccessibleBuffer<[crate::vertex::Vertex]>>,
+    serpenskis: Vec<crate::game::Serpenskis>,
     #[allow(dead_code)]
     pipeline: Arc<crate::pipeline::ConcreteGraphicsPipeline>,
     #[allow(dead_code)]
@@ -48,6 +48,7 @@ struct Hex {
 
 impl Hex {
     pub fn new() -> Self {
+        println!("{}",std::mem::size_of::<crate::shaders::vs::ty::PushConstantData>());
         let instance = crate::instance::create_instance();
         let _debug_callback = crate::instance::setup_debug_callback(&instance);
         let (event_loop, surface) = crate::window::init_window(&instance);
@@ -55,7 +56,29 @@ impl Hex {
             crate::device::create_logical_device(&instance, &surface);
         let (swapchain, images) =
             crate::swapchains::get_swapchain(&surface, &device, &graphical_queue, &present_queue);
-        let vertex_buffer = crate::vertex::Vertex::get_buffer(&device);
+        let serpenskis = vec![
+            crate::game::Serpenskis::new(
+                &device,
+                [0.0, 1.0, 0.0, 1.0],
+                [0.0, 0.0],
+                [1.0, 1.0],
+                [0.0],
+            ),
+            crate::game::Serpenskis::new(
+                &device,
+                [0.0, 1.0, 1.0, 1.0],
+                [0.0, 1.0],
+                [0.5, 1.0],
+                [std::f32::consts::PI],
+            ),
+            crate::game::Serpenskis::new(
+                &device,
+                [1.0, 1.0, 0.0, 1.0],
+                [0.0, 1.0],
+                [0.5, 0.5],
+                [2.0 * std::f32::consts::PI],
+            ),
+        ];
         let renderpass = crate::renderpass::get_render_pass(&device, &swapchain);
         let pipeline = crate::pipeline::get_pipeline(&device, &renderpass);
         let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
@@ -70,7 +93,7 @@ impl Hex {
             images,
             _debug_callback,
             renderpass,
-            vertex_buffer,
+            serpenskis,
             pipeline,
             framebuffers,
             resizehelper,
@@ -85,7 +108,7 @@ impl Hex {
             event_loop,
             graphical_queue,
             present_queue,
-            vertex_buffer,
+            serpenskis,
             pipeline,
             surface,
             renderpass,
@@ -132,14 +155,7 @@ impl Hex {
                 if suboptimal {
                     recreate_swapchain = true;
                 }
-
                 let frame = framebuffers[image_num].clone();
-                let push_constants: Vec<_> = (0..3)
-                    .map(|i| crate::shaders::vs::ty::PushConstantData {
-                        offset: [0.0 + offset, -0.4 + i as f32 * 0.25],
-                        color: [0.0, 0.0, 0.2 + 0.2 * i as f32, 1.0],
-                    })
-                    .collect();
                 offset = (offset + 1.52) % 2.5 - 1.5;
 
                 let cmd_buffer = crate::commandbuffers::get_command_buffers(
@@ -147,9 +163,8 @@ impl Hex {
                     &graphical_queue,
                     &device,
                     &frame,
-                    &vertex_buffer,
                     &resizehelper,
-                    &push_constants,
+                    &serpenskis.as_slice(),
                 );
                 let future = previous_frame_end
                     .take()

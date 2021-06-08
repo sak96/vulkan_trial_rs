@@ -10,11 +10,12 @@ pub mod vs {
 
               layout(push_constant) uniform PushConstantData {
                   vec4 color;
-                  vec2 offset;
+                  mat2 transform;
+                  vec2 translate;
               } push;
 
               void main() {
-                  gl_Position = vec4(position + push.offset, 0.0, 1.0);
+                  gl_Position = vec4(push.transform * (position + push.translate), 0.0, 1.0);
                   vertex_color = push.color;
               }
           "
