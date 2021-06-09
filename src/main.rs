@@ -2,8 +2,8 @@ use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod device;
-mod model;
 mod instance;
+mod model;
 mod render;
 mod shaders;
 mod simple_display;
@@ -83,7 +83,11 @@ impl Hex {
                 if let Some(mut cmd_builder) =
                     render.get_command_buffer_builder(logical_device.graphical_queue.clone())
                 {
-                    simple_display.render_game_objects(&mut cmd_builder, &serpenskis, &render.inner());
+                    simple_display.render_game_objects(
+                        &mut cmd_builder,
+                        &serpenskis,
+                        &render.inner(),
+                    );
                     render.render(
                         cmd_builder,
                         &logical_device.graphical_queue.clone(),
