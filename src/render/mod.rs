@@ -83,6 +83,7 @@ impl Render {
                 Err(e) => panic!("failed due to {:?}", e),
             };
         self.acquire_future = Some(acquire_future);
+        self.current_image_index = image_num;
         if suboptimal {
             self.recreate_swapchain = true;
         }
