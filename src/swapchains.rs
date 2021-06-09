@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use vulkano::device::{Device, Queue};
 use vulkano::image::{ImageUsage, SwapchainImage};
 use vulkano::swapchain::{Surface, Swapchain};
 use vulkano::sync::SharingMode;
