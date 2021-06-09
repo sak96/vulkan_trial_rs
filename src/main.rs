@@ -1,21 +1,18 @@
-use std::sync::Arc;
-
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod device;
-mod game;
+mod model;
 mod instance;
 mod render;
 mod shaders;
 mod simple_display;
-mod vertex;
 mod window;
 
 struct Hex {
     event_loop: EventLoop<()>,
     logical_device: crate::device::LogicalDevice,
-    serpenskis: Vec<crate::game::Serpenskis>,
+    serpenskis: Vec<crate::model::GameObject>,
     render: crate::render::Render,
 }
 
@@ -31,21 +28,21 @@ impl Hex {
             crate::device::LogicalDevice::create_logical_device(&instance, &surface);
         let render = crate::render::Render::new(&logical_device, &surface);
         let serpenskis = vec![
-            crate::game::Serpenskis::new(
+            crate::model::GameObject::new(
                 &logical_device.device,
                 [0.0, 1.0, 0.0, 1.0],
                 [0.0, 0.0],
                 [1.0, 1.0],
                 [0.0],
             ),
-            crate::game::Serpenskis::new(
+            crate::model::GameObject::new(
                 &logical_device.device,
                 [0.0, 1.0, 1.0, 1.0],
                 [0.0, 1.0],
                 [0.5, 1.0],
                 [std::f32::consts::PI],
             ),
-            crate::game::Serpenskis::new(
+            crate::model::GameObject::new(
                 &logical_device.device,
                 [1.0, 1.0, 0.0, 1.0],
                 [0.0, 1.0],

@@ -21,7 +21,7 @@ impl Pipeline {
     pub fn render_game_objects(
         &self,
         cmd_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>,
-        game_objs: &[crate::game::Serpenskis],
+        game_objs: &[crate::model::GameObject],
         dynamicstate: &DynamicState,
     ) {
         for objs in game_objs.iter() {

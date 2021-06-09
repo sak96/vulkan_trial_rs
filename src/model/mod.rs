@@ -3,25 +3,29 @@ use std::{cell::RefCell, sync::Arc};
 use glam::{Mat2, Mat3, Vec2};
 use vulkano::{buffer::CpuAccessibleBuffer, device::Device};
 
+mod vertex;
+
+pub use vertex::Vertex;
+
 const MAX_DIM: usize = 2;
 type Dims = [f32; MAX_DIM];
 type Rotate = [f32; MAX_DIM - 1];
 type Color = [f32; 4];
 
-pub struct Serpenskis {
+pub struct GameObject {
     id: usize,
     translate: Dims,
     scale: Dims,
     rotate: Rotate,
     color: Color,
-    pub vertex_buffer: Arc<CpuAccessibleBuffer<[crate::vertex::Vertex]>>,
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
 }
 
 thread_local! {
     static OBJECT_COUNT: RefCell<usize> = RefCell::new(0);
 }
 
-impl Serpenskis {
+impl GameObject {
     pub fn new(
         device: &Arc<Device>,
         color: Color,
@@ -35,7 +39,7 @@ impl Serpenskis {
             *game_count += 1;
             id
         });
-        let vertex_buffer = crate::vertex::Vertex::get_buffer(&device);
+        let vertex_buffer = Vertex::get_buffer(&device);
         Self {
             id,
             vertex_buffer,

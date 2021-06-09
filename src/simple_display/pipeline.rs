@@ -6,7 +6,7 @@ use vulkano::pipeline::{vertex::SingleBufferDefinition, GraphicsPipeline};
 use vulkano::render_pass::{RenderPass, Subpass};
 
 use crate::shaders::{fs, vs};
-use crate::vertex::Vertex;
+use crate::model::Vertex;
 
 pub type ConcreteGraphicsPipeline = GraphicsPipeline<
     SingleBufferDefinition<Vertex>,
