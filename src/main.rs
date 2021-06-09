@@ -4,15 +4,11 @@ use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod device;
-mod dynamicstate;
-mod framebuffers;
 mod game;
 mod instance;
 mod pipeline;
 mod render;
-mod renderpass;
 mod shaders;
-mod swapchains;
 mod vertex;
 mod window;
 

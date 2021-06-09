@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use vulkano::{
-    command_buffer::{DynamicState},
+    command_buffer::DynamicState,
     image::SwapchainImage,
     pipeline::viewport::Viewport,
     render_pass::{FramebufferAbstract, RenderPass},
@@ -34,7 +34,7 @@ impl ResizeHelper {
         };
         *swapchain = new_swapchain;
         *images = new_images;
-        *framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
+        *framebuffers = super::framebuffers::get_frame_buffer(&images, &renderpass);
         self.resize_using_dynamic_state(&swapchain);
         true
     }

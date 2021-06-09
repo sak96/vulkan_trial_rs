@@ -1,30 +1,29 @@
 use std::sync::Arc;
 
-use vulkano::command_buffer::AutoCommandBufferBuilder;
-use vulkano::command_buffer::DynamicState;
-use vulkano::command_buffer::PrimaryAutoCommandBuffer;
-use vulkano::command_buffer::SubpassContents;
-use vulkano::device::Device;
-use vulkano::device::Queue;
-use vulkano::image::SwapchainImage;
-use vulkano::render_pass::FramebufferAbstract;
-use vulkano::render_pass::RenderPass;
-use vulkano::swapchain;
-use vulkano::swapchain::AcquireError;
-use vulkano::swapchain::Surface;
-use vulkano::swapchain::Swapchain;
-use vulkano::swapchain::SwapchainAcquireFuture;
-use vulkano::sync;
-use vulkano::sync::FlushError;
-use vulkano::sync::GpuFuture;
+use vulkano::{
+    command_buffer::{
+        AutoCommandBufferBuilder, DynamicState, PrimaryAutoCommandBuffer, SubpassContents,
+    },
+    device::{Device, Queue},
+    image::SwapchainImage,
+    render_pass::{FramebufferAbstract, RenderPass},
+    swapchain::{self, AcquireError, Surface, Swapchain, SwapchainAcquireFuture},
+    sync::{self, FlushError, GpuFuture},
+};
+
 use winit::window::Window;
 
 use crate::device::LogicalDevice;
 
+mod dynamicstate;
+mod framebuffers;
+mod renderpass;
+mod swapchains;
+
 pub struct Render {
     device: Arc<Device>,
     swapchain: Arc<Swapchain<Window>>,
-    resizehelper: crate::dynamicstate::ResizeHelper,
+    resizehelper: dynamicstate::ResizeHelper,
     surface: Arc<Surface<Window>>,
     images: Vec<Arc<SwapchainImage<Window>>>,
     pub renderpass: Arc<RenderPass>,
@@ -41,10 +40,10 @@ impl Render {
     }
     pub fn new(logical_device: &LogicalDevice, surface: &Arc<Surface<Window>>) -> Self {
         let previous_frame_end = Some(sync::now(logical_device.device.clone()).boxed());
-        let (swapchain, images) = crate::swapchains::get_swapchain(&surface, &logical_device);
-        let resizehelper = crate::dynamicstate::ResizeHelper::new(&swapchain);
-        let renderpass = crate::renderpass::get_render_pass(&logical_device.device, &swapchain);
-        let framebuffers = crate::framebuffers::get_frame_buffer(&images, &renderpass);
+        let (swapchain, images) = swapchains::get_swapchain(&surface, &logical_device);
+        let resizehelper = dynamicstate::ResizeHelper::new(&swapchain);
+        let renderpass = renderpass::get_render_pass(&logical_device.device, &swapchain);
+        let framebuffers = framebuffers::get_frame_buffer(&images, &renderpass);
         Self {
             device: logical_device.device.clone(),
             surface: surface.clone(),
