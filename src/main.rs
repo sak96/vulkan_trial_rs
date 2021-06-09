@@ -6,9 +6,9 @@ use winit::event_loop::{ControlFlow, EventLoop};
 mod device;
 mod game;
 mod instance;
-mod pipeline;
 mod render;
 mod shaders;
+mod simple_display;
 mod vertex;
 mod window;
 
@@ -16,7 +16,6 @@ struct Hex {
     event_loop: EventLoop<()>,
     logical_device: crate::device::LogicalDevice,
     serpenskis: Vec<crate::game::Serpenskis>,
-    pipeline: Arc<crate::pipeline::ConcreteGraphicsPipeline>,
     render: crate::render::Render,
 }
 
@@ -54,12 +53,10 @@ impl Hex {
                 [2.0 * std::f32::consts::PI],
             ),
         ];
-        let pipeline = crate::pipeline::get_pipeline(&logical_device.device, &render.renderpass);
         Self {
             event_loop,
             logical_device,
             serpenskis,
-            pipeline,
             render,
         }
     }
@@ -69,10 +66,11 @@ impl Hex {
             logical_device,
             event_loop,
             serpenskis,
-            pipeline,
             mut render,
             ..
         } = self;
+        let simple_display =
+            simple_display::Pipeline::new(&logical_device.device, &render.renderpass);
         event_loop.run(move |event, _, control_flow| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -88,18 +86,7 @@ impl Hex {
                 if let Some(mut cmd_builder) =
                     render.get_command_buffer_builder(logical_device.graphical_queue.clone())
                 {
-                    for serpenski in serpenskis.iter() {
-                        cmd_builder
-                            .draw(
-                                pipeline.clone(),
-                                &render.inner(),
-                                serpenski.vertex_buffer.clone(),
-                                (),
-                                serpenski.get_push_data(),
-                                vec![],
-                            )
-                            .unwrap();
-                    }
+                    simple_display.render_game_objects(&mut cmd_builder, &serpenskis, &render.inner());
                     render.render(
                         cmd_builder,
                         &logical_device.graphical_queue.clone(),
