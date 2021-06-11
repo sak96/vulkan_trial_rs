@@ -12,7 +12,7 @@ mod window;
 struct Hex {
     event_loop: EventLoop<()>,
     logical_device: crate::device::LogicalDevice,
-    serpenskis: Vec<crate::model::GameObject>,
+    game_objects: Vec<crate::model::GameObject>,
     render: crate::render::Render,
 }
 
@@ -27,7 +27,7 @@ impl Hex {
         let logical_device =
             crate::device::LogicalDevice::create_logical_device(&instance, &surface);
         let render = crate::render::Render::new(&logical_device, &surface);
-        let serpenskis = vec![
+        let game_objects = vec![
             crate::model::GameObject::new(
                 &logical_device.device,
                 [0.0, 0.0, 0.5],
@@ -50,7 +50,7 @@ impl Hex {
         Self {
             event_loop,
             logical_device,
-            serpenskis,
+            game_objects,
             render,
         }
     }
@@ -59,7 +59,7 @@ impl Hex {
         let Self {
             logical_device,
             event_loop,
-            serpenskis,
+            game_objects,
             mut render,
             ..
         } = self;
@@ -82,7 +82,7 @@ impl Hex {
                 {
                     simple_display.render_game_objects(
                         &mut cmd_builder,
-                        &serpenskis,
+                        &game_objects,
                         &render.inner(),
                     );
                     render.render(
