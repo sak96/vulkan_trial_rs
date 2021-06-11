@@ -30,24 +30,21 @@ impl Hex {
         let serpenskis = vec![
             crate::model::GameObject::new(
                 &logical_device.device,
-                [0.0, 1.0, 0.0, 1.0],
-                [0.0, 0.0],
-                [1.0, 1.0],
-                [0.0],
+                [0.0, 0.0, 0.5],
+                [0.1, 0.5, 0.1],
+                [0.0, 0.0, 0.0],
             ),
             crate::model::GameObject::new(
                 &logical_device.device,
-                [0.0, 1.0, 1.0, 1.0],
-                [0.0, 1.0],
-                [0.5, 1.0],
-                [std::f32::consts::PI],
+                [0.0, -1.0, 0.0],
+                [0.5, 1.0, 0.0],
+                [std::f32::consts::PI, 0.0, 0.0],
             ),
             crate::model::GameObject::new(
                 &logical_device.device,
-                [1.0, 1.0, 0.0, 1.0],
-                [0.0, 1.0],
-                [0.5, 0.5],
-                [2.0 * std::f32::consts::PI],
+                [0.0, 1.0, 0.0],
+                [0.5, 0.5, 0.0],
+                [2.0 * std::f32::consts::PI, 0.0, 0.0],
             ),
         ];
         Self {
