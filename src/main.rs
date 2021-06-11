@@ -59,7 +59,7 @@ impl Hex {
         let Self {
             logical_device,
             event_loop,
-            game_objects,
+            mut game_objects,
             mut render,
             ..
         } = self;
@@ -82,7 +82,7 @@ impl Hex {
                 {
                     simple_display.render_game_objects(
                         &mut cmd_builder,
-                        &game_objects,
+                        &mut game_objects,
                         &render.inner(),
                     );
                     render.render(
