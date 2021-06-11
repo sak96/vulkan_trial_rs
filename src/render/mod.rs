@@ -43,10 +43,12 @@ impl Render {
         let (swapchain, images) = swapchains::get_swapchain(&surface, &logical_device);
         let resizehelper = dynamicstate::ResizeHelper::new(&swapchain);
         let renderpass = renderpass::get_render_pass(&logical_device.device, &swapchain);
-        let framebuffers = framebuffers::get_frame_buffer(&images, &renderpass);
+        let device = logical_device.device.clone();
+        let framebuffers =
+            framebuffers::get_frame_buffer(&swapchain, &device, &images, &renderpass);
         Self {
-            device: logical_device.device.clone(),
             surface: surface.clone(),
+            device,
             swapchain,
             images,
             renderpass,
@@ -66,6 +68,7 @@ impl Render {
         self.previous_frame_end.as_mut().unwrap().cleanup_finished();
         if self.recreate_swapchain {
             self.recreate_swapchain = self.resizehelper.resize(
+                &self.device,
                 &self.surface,
                 &self.renderpass,
                 &mut self.swapchain,
@@ -88,7 +91,6 @@ impl Render {
             self.recreate_swapchain = true;
         }
         let frame = self.framebuffers[image_num].clone();
-        let clear_values = vec![[0.0, 0.0, 0.0, 1.0].into()];
         let mut cmd_builder = AutoCommandBufferBuilder::primary(
             self.device.clone(),
             graphical_queue.family(),
@@ -96,7 +98,11 @@ impl Render {
         )
         .unwrap();
         cmd_builder
-            .begin_render_pass(frame.clone(), SubpassContents::Inline, clear_values.clone())
+            .begin_render_pass(
+                frame.clone(),
+                SubpassContents::Inline,
+                vec![[0.0, 0.0, 0.0, 1.0].into(), 1f32.into()],
+            )
             .unwrap();
         Some(cmd_builder)
     }

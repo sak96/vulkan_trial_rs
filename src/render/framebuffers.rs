@@ -1,16 +1,26 @@
 use std::sync::Arc;
 
 use vulkano::{
-    image::{view::ImageView, SwapchainImage},
+    device::Device,
+    format::Format,
+    image::{view::ImageView, AttachmentImage, SwapchainImage},
     render_pass::{Framebuffer, FramebufferAbstract, RenderPass},
+    swapchain::Swapchain,
 };
 
 use winit::window::Window;
 
 pub fn get_frame_buffer(
+    swapchain: &Swapchain<Window>,
+    device: &Arc<Device>,
     images: &[Arc<SwapchainImage<Window>>],
     render_pass: &Arc<RenderPass>,
 ) -> Vec<Arc<dyn FramebufferAbstract + Send + Sync>> {
+    let depth_buffer = ImageView::new(
+        AttachmentImage::transient(device.clone(), swapchain.dimensions(), Format::D16Unorm)
+            .unwrap(),
+    )
+    .unwrap();
     images
         .iter()
         .map(|image| {
@@ -18,6 +28,8 @@ pub fn get_frame_buffer(
             Arc::new(
                 Framebuffer::start(render_pass.clone())
                     .add(view)
+                    .unwrap()
+                    .add(depth_buffer.clone())
                     .unwrap()
                     .build()
                     .unwrap(),

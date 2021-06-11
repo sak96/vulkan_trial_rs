@@ -27,6 +27,7 @@ pub fn get_pipeline(
             .triangle_list()
             .viewports_dynamic_scissors_irrelevant(1)
             .fragment_shader(fs.main_entry_point(), ())
+            .depth_stencil_simple_depth()
             .render_pass(Subpass::from(renderpass.clone(), 0).unwrap())
             .build(device.clone())
             .unwrap(),

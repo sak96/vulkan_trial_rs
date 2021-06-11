@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use vulkano::{
     command_buffer::DynamicState,
+    device::Device,
     image::SwapchainImage,
     pipeline::viewport::Viewport,
     render_pass::{FramebufferAbstract, RenderPass},
@@ -20,6 +21,7 @@ impl ResizeHelper {
 
     pub fn resize(
         &mut self,
+        device: &Arc<Device>,
         surface: &Arc<Surface<Window>>,
         renderpass: &Arc<RenderPass>,
         swapchain: &mut Arc<Swapchain<Window>>,
@@ -34,7 +36,8 @@ impl ResizeHelper {
         };
         *swapchain = new_swapchain;
         *images = new_images;
-        *framebuffers = super::framebuffers::get_frame_buffer(&images, &renderpass);
+        *framebuffers =
+            super::framebuffers::get_frame_buffer(&swapchain, &device, &images, &renderpass);
         self.resize_using_dynamic_state(&swapchain);
         true
     }
