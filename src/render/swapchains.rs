@@ -35,6 +35,7 @@ pub fn get_swapchain(
         .usage(ImageUsage::color_attachment())
         .sharing_mode(sharing)
         .composite_alpha(alpha)
+        .present_mode(vulkano::swapchain::PresentMode::Fifo)
         .build()
         .expect("failed to create swapchain")
 }
