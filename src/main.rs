@@ -18,10 +18,6 @@ struct Hex {
 
 impl Hex {
     pub fn new() -> Self {
-        println!(
-            "{}",
-            std::mem::size_of::<crate::shaders::vs::ty::PushConstantData>()
-        );
         let instance = crate::instance::create_instance();
         let (event_loop, surface) = crate::window::init_window(&instance);
         let logical_device =
