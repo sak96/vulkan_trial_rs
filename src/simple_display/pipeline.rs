@@ -23,7 +23,7 @@ pub fn get_pipeline(
         GraphicsPipeline::start()
             .vertex_input_single_buffer()
             .vertex_shader(vs.main_entry_point(), ())
-            .polygon_mode_line()
+            // .polygon_mode_line()
             .triangle_list()
             .viewports_dynamic_scissors_irrelevant(1)
             .fragment_shader(fs.main_entry_point(), ())

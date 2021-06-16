@@ -47,13 +47,16 @@ impl GameObject {
         self.id
     }
 
-    pub fn get_push_data(&self) -> crate::shaders::vs::ty::PushConstantData {
+    pub fn get_push_data(
+        &self,
+        camera_transform: &Mat4,
+    ) -> crate::shaders::vs::ty::PushConstantData {
         let translate = Mat4::from_translation(Vec3::from_slice(&self.translate));
         let rotation = Mat4::from_rotation_y(self.rotate[0]);
         let rotation = rotation * Mat4::from_rotation_x(self.rotate[1]);
         let rotation = rotation * Mat4::from_rotation_z(self.rotate[2]);
         let scale = Mat4::from_scale(Vec3::from_slice(&self.scale));
-        let transform = translate * scale * rotation ;
+        let transform = *camera_transform * translate * scale * rotation;
         crate::shaders::vs::ty::PushConstantData {
             transform: Into::<Mat4>::into(transform).to_cols_array_2d(),
         }

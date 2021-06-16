@@ -61,6 +61,11 @@ impl Render {
         }
     }
 
+    pub fn get_aspect_ratio(&self) -> f32 {
+        let dim = self.swapchain.dimensions();
+        dim[0] as f32 / dim[1] as f32
+    }
+
     pub fn get_command_buffer_builder(
         &mut self,
         graphical_queue: Arc<Queue>,

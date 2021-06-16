@@ -32,14 +32,14 @@ impl Hex {
             ),
             crate::model::GameObject::new(
                 &logical_device.device,
-                [0.0, -1.0, 0.0],
-                [0.5, 1.0, 0.0],
+                [0.0, -10.0, 10.0],
+                [0.5, 1.0, 0.5],
                 [std::f32::consts::PI, 0.0, 0.0],
             ),
             crate::model::GameObject::new(
                 &logical_device.device,
-                [0.0, 1.0, 0.0],
-                [0.5, 0.5, 0.0],
+                [5.0, 10.0, 15.0],
+                [0.5, 0.5, 0.5],
                 [2.0 * std::f32::consts::PI, 0.0, 0.0],
             ),
         ];
@@ -73,6 +73,23 @@ impl Hex {
                 ..
             } => render.recreate_swapchain(),
             Event::RedrawEventsCleared => {
+                let aspect = render.get_aspect_ratio();
+                let camera = glam::Mat4::perspective_lh(
+                    std::f32::consts::PI * (50.0 / 90.0),
+                    aspect,
+                    0.1,
+                    20.0,
+                );
+                // let camera = glam::Mat4::orthographic_lh(
+                //     aspect * 20.0,
+                //     -aspect * 20.0,
+                //     20.0,
+                //     -20.0,
+                //     20.0,
+                //     0.1,
+                // );
+                // let camera = glam::Mat4::IDENTITY;
+
                 if let Some(mut cmd_builder) =
                     render.get_command_buffer_builder(logical_device.graphical_queue.clone())
                 {
@@ -80,6 +97,7 @@ impl Hex {
                         &mut cmd_builder,
                         &mut game_objects,
                         &render.inner(),
+                        &camera,
                     );
                     render.render(
                         cmd_builder,

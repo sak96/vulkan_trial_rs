@@ -23,6 +23,7 @@ impl Pipeline {
         cmd_builder: &mut AutoCommandBufferBuilder<PrimaryAutoCommandBuffer>,
         game_objs: &mut [crate::model::GameObject],
         dynamicstate: &DynamicState,
+        camera: &glam::Mat4,
     ) {
         for objs in game_objs.iter_mut() {
             objs.rotate[0] = objs.rotate[0] + 0.01;
@@ -34,7 +35,7 @@ impl Pipeline {
                     &dynamicstate,
                     objs.vertex_buffer.clone(),
                     (),
-                    objs.get_push_data(),
+                    objs.get_push_data(camera),
                     vec![],
                 )
                 .unwrap();
